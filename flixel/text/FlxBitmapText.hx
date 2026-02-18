@@ -580,6 +580,7 @@ class FlxBitmapText extends FlxSprite
 	{
 		if (value != text)
 		{
+			value = sanitizeText(value, font);
 			text = value;
 			pendingTextChange = true;
 		}
@@ -1782,6 +1783,31 @@ class FlxBitmapText extends FlxSprite
 	{
 		return ((Code >= 768 && Code <= 879) || (Code >= 6832 && Code <= 6911) || (Code >= 7616 && Code <= 7679) || (Code >= 8400 && Code <= 8447)
 			|| (Code >= 65056 && Code <= 65071));
+	}
+
+	inline function sanitizeText(text:String, font:FlxBitmapFont):String {
+    	if (font == null) return text;
+
+		var buf = new StringBuf();
+
+		for (i in 0...text.length) {
+			var c = text.charCodeAt(i);
+
+			// Always preserve literal spaces (even if not in charMap)
+			if (c == " ".code) {
+				buf.add(" ");
+				continue;
+			}
+
+			// Skip or replace missing glyphs
+			if (font.charMap.exists(c)) {
+				buf.addChar(c);
+			} else {
+				buf.add(""); // fallback
+			}
+		}
+
+		return buf.toString();
 	}
 }
 
