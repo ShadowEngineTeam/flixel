@@ -343,8 +343,6 @@ class FlxGame extends Sprite
 		addChild(debugger);
 		#end
 
-		// No need for overlays on mobile.
-		#if !mobile
 		// Volume display tab
 		#if FLX_SOUND_TRAY
 		soundTray = Type.createInstance(_customSoundTray, []);
@@ -354,7 +352,6 @@ class FlxGame extends Sprite
 		#if FLX_FOCUS_LOST_SCREEN
 		_focusLostScreen = Type.createInstance(_customFocusLostScreen, []);
 		addChild(_focusLostScreen);
-		#end
 		#end
 
 		// Focus gained/lost monitoring
