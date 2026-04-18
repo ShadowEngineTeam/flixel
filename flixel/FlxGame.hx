@@ -288,18 +288,15 @@ class FlxGame extends Sprite
 		addChild(debugger);
 		#end
 
-		// No need for overlays on mobile.
-		#if !mobile
 		// Volume display tab
 		#if FLX_SOUND_TRAY
 		soundTray = Type.createInstance(_customSoundTray, []);
 		addChild(soundTray);
 		#end
 
-		#if FLX_FOCUS_LOST_SCREEN
+		#if (!mobile && FLX_FOCUS_LOST_SCREEN)
 		_focusLostScreen = Type.createInstance(_customFocusLostScreen, []);
 		addChild(_focusLostScreen);
-		#end
 		#end
 
 		// Focus gained/lost monitoring
@@ -687,12 +684,11 @@ class FlxGame extends Sprite
 
 	function updateElapsed(deltaTime:Float):Void
 	{
-		FlxG.elapsed = FlxG.timeScale * (deltaTime / 1000.0); // variable timestep
+		FlxG.rawElapsed = deltaTime / 1000; // variable timestep
+		if (FlxG.rawElapsed > FlxG.maxElapsed)
+			FlxG.rawElapsed = FlxG.maxElapsed;
 
-		var max = FlxG.maxElapsed * FlxG.timeScale;
-
-		if (FlxG.elapsed > max)
-			FlxG.elapsed = max;
+		FlxG.elapsed = FlxG.timeScale * FlxG.rawElapsed;
 	}
 
 	function updateInput(deltaTime:Float):Void

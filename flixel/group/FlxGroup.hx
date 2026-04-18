@@ -89,6 +89,16 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic
 	public var memberRemoved(get, never):FlxTypedSignal<T->Void>;
 
 	/**
+	 * Wether to sort the objects in this `FlxGroup` based on their zIndex.
+	 */
+	public var useZIndex:Bool = true;
+
+	/**
+	 * Wether to always refresh the group's basics order based on their zIndex when a member is added/removed.
+	 */
+	public var autoRefresh:Bool = true;
+
+	/**
 	 * Internal variables for lazily creating `memberAdded` and `memberRemoved` signals when needed.
 	 */
 	@:noCompletion
@@ -205,31 +215,54 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic
 		if (members.indexOf(basic) >= 0)
 			return basic;
 
-		// First, look for a null entry where we can add the object.
-		final index:Int = getFirstNull();
-		if (index != -1)
+		// First, try adding the object in it's requested zIndex.
+		if (basic.zIndex > -1 && useZIndex)
 		{
-			members[index] = basic;
-
-			if (index >= length)
+			// If the group is full, return the basic
+			if (maxSize > 0 && length >= maxSize)
+				return basic;
+	
+			// Insert the basic in it's index
+			members.insert(basic.zIndex, basic);
+		}
+		else
+		{
+			// If no zIndex is requested, look for a null entry where we can add the object.
+			final index:Int = getFirstNull();
+			if (index != -1)
 			{
-				length = index + 1;
+				if (useZIndex)
+					basic._zIndex = index;
+				members[index] = basic;
+	
+				if (index >= length)
+				{
+					length = index + 1;
+				}
+				
+				onMemberAdd(basic);
+				
+				return basic;
 			}
-			
-			onMemberAdd(basic);
-			
-			return basic;
+	
+			// If the group is full, return the basic
+			if (maxSize > 0 && length >= maxSize)
+				return basic;
+	
+			// If we made it this far, we need to add the basic to the group.
+			members.push(basic);
+
+			if (useZIndex)
+				basic._zIndex = members.length - 1;
 		}
 
-		// If the group is full, return the basic
-		if (maxSize > 0 && length >= maxSize)
-			return basic;
-
-		// If we made it this far, we need to add the basic to the group.
-		members.push(basic);
 		length++;
+
+		if (autoRefresh && useZIndex)
+			refresh();
+
 		onMemberAdd(basic);
-		
+
 		return basic;
 	}
 
@@ -261,6 +294,8 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic
 		if (position < length && members[position] == null)
 		{
 			members[position] = object;
+			if (useZIndex)
+				object._zIndex = position;
 			onMemberAdd(object);
 			
 			return object;
@@ -272,7 +307,24 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic
 
 		// If we made it this far, we need to insert the object into the group at the specified position.
 		members.insert(position, object);
+
+		if (useZIndex)
+			object._zIndex = members.indexOf(object);
+		
 		length++;
+
+		// To properly apply the ordering we must updated the zIndexes based on the array to avoid conflict when 2 objects have the same zIndex
+		if (autoRefresh && useZIndex)
+		{
+			for (i in (position + 1)...length)
+    		{
+        		if (members[i] != null)
+            		members[i]._zIndex = i; 
+    		}
+
+			refresh();
+		}
+
 		onMemberAdd(object);
 
 		return object;
@@ -372,7 +424,13 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic
 		}
 		else
 			members[index] = null;
+
+		if (!basic.zIndexSet && useZIndex)
+			basic._zIndex = -1;
 		
+		if (autoRefresh && useZIndex)
+			refresh();
+
 		onMemberRemove(basic);
 		
 		return basic;
@@ -414,6 +472,20 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic
 	public inline function sort(func:(Int,T,T)->Int, order = FlxSort.ASCENDING):Void
 	{
 		members.sort(func.bind(order));
+	}
+
+	/**
+   	 * Refreshes the group, by sotring the order of all basics based on their zIndex.
+   	 * It does this based on the `zIndex` of each prop.
+    */
+	public inline function refresh():Void
+	{
+		if (!useZIndex) return;
+	    sort(function(order:Int, a:T, b:T):Int
+  		{
+    		if (a == null || b == null) return 0;
+    		return FlxSort.byValues(order, a.zIndex, b.zIndex);
+  		});
 	}
 	
 	/**

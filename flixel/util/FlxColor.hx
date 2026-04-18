@@ -196,6 +196,10 @@ abstract FlxColor(Int) from Int from UInt to Int to UInt
 		var result:Null<FlxColor> = null;
 		str = StringTools.trim(str);
 
+		// idfk???
+		if (str.length == 12)
+			str = "0x" + str.substr(4);
+
 		if (COLOR_REGEX.match(str))
 		{
 			var hexColor:String = "0x" + COLOR_REGEX.matched(2);

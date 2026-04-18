@@ -26,6 +26,12 @@ class FlxBasic implements IFlxDestroyable
 	 */
 	public var ID:Int = idEnumerator++;
 
+	/**
+	 * A number representing the position of this `FlxBasic ` inside the `FlxGroup` it's added into.
+	 * If it's -1 (the default value), then this `FlxBasic` is just pushed as the last member on the group's current list.
+	 */
+	public var zIndex(get, set):Int;
+
 	@:noCompletion
 	static var idEnumerator:Int = 0;
 
@@ -70,6 +76,16 @@ class FlxBasic implements IFlxDestroyable
 
 	@:noCompletion
 	var _cameras:Array<FlxCamera>;
+
+	@:allow(flixel.group.FlxGroup)
+	@:allow(flixel.group.FlxSpriteGroup)
+	@:noCompletion
+	var zIndexSet(default, null):Bool = false;
+
+	@:allow(flixel.group.FlxGroup)
+	@:allow(flixel.group.FlxSpriteGroup)
+	@:noCompletion
+	var _zIndex:Int = -1;
 	
 	/**
 	 * The parent containing this basic, typically if you check this recursively you should reach the state
@@ -253,6 +269,19 @@ class FlxBasic implements IFlxDestroyable
 	{
 		return this.container;
 	}
+
+	@:noCompletion
+	function set_zIndex(value:Int):Int
+	{
+		zIndexSet = true;
+		return _zIndex = value;
+	}
+
+	@:noCompletion
+	function get_zIndex():Int
+	{
+		return _zIndex;
+	}
 }
 
 /**
@@ -270,6 +299,7 @@ enum abstract FlxType(Int)
 interface IFlxBasic
 {
 	var ID:Int;
+	var zIndex(get, set):Int;
 	var active(default, set):Bool;
 	var visible(default, set):Bool;
 	var alive(default, set):Bool;

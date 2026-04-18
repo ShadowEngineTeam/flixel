@@ -1606,6 +1606,22 @@ class FlxCamera extends FlxBasic
 	}
 
 	/**
+	 * Sets the filter array to be applied to the camera.
+	 */
+	public function setFilters(filters:Array<BitmapFilter>):Void
+	{
+		this.filters = filters;
+	}
+
+	/**
+	 * Gets the filter array applied to the camera.
+	 */
+	public function getFilters()
+	{
+		return this.filters;
+	}
+
+	/**
 	 * Copy the bounds, focus object, and `deadzone` info from an existing camera.
 	 *
 	 * @param   Camera  The camera you want to copy from.
@@ -1657,9 +1673,6 @@ class FlxCamera extends FlxBasic
 		}
 		else
 		{
-			if (FxAlpha == 0)
-				return;
-
 			final targetGraphics = (graphics == null) ? canvas.graphics : graphics;
 
 			targetGraphics.overrideBlendMode(null);
