@@ -25,6 +25,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 	static var rect:FlxRect = FlxRect.get();
 
 	public var shader:FlxShader;
+
 	var alphas:Array<Float>;
 	var colorMultipliers:Array<Float>;
 	var colorOffsets:Array<Float>;
@@ -127,10 +128,10 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 	}
 
 	public function addTriangles(vertices:DrawData<Float>, indices:DrawData<Int>, uvtData:DrawData<Float>, ?colors:DrawData<Int>, ?position:FlxPoint,
-			?cameraBounds:FlxRect, ?transform:ColorTransform):Void
+			?cameraBounds:FlxRect #if !flash, ?transform:ColorTransform #end):Void
 	{
 		if (position == null)
-			position = point.zero();
+			position = point.set();
 
 		if (cameraBounds == null)
 			cameraBounds = rect.set(0, 0, FlxG.width, FlxG.height);
@@ -231,6 +232,50 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 
 		position.putWeak();
 		cameraBounds.putWeak();
+
+		#if !flash
+		for (_ in 0...indicesLength)
+		{
+			alphas.push(transform != null ? transform.alphaMultiplier : 1.0);
+		}
+
+		if (colored || hasColorOffsets)
+		{
+			if (colorMultipliers == null)
+				colorMultipliers = [];
+
+			if (colorOffsets == null)
+				colorOffsets = [];
+
+			for (_ in 0...indicesLength)
+			{
+				if (transform != null)
+				{
+					colorMultipliers.push(transform.redMultiplier);
+					colorMultipliers.push(transform.greenMultiplier);
+					colorMultipliers.push(transform.blueMultiplier);
+
+					colorOffsets.push(transform.redOffset);
+					colorOffsets.push(transform.greenOffset);
+					colorOffsets.push(transform.blueOffset);
+					colorOffsets.push(transform.alphaOffset);
+				}
+				else
+				{
+					colorMultipliers.push(1);
+					colorMultipliers.push(1);
+					colorMultipliers.push(1);
+
+					colorOffsets.push(0);
+					colorOffsets.push(0);
+					colorOffsets.push(0);
+					colorOffsets.push(0);
+				}
+
+				colorMultipliers.push(1);
+			}
+		}
+		#end
 	}
 
 	inline function setParameterValue(parameter:ShaderParameter<Bool>, value:Bool):Void
