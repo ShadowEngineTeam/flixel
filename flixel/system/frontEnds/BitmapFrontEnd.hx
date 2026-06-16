@@ -116,15 +116,7 @@ class BitmapFrontEnd
 	 */
 	public function addGraphic(graphic:FlxGraphic):FlxGraphic
 	{
-		if (!_cache.exists(graphic.key) || _cache.get(graphic.key) == null)
-		{
-			_cache.set(graphic.key, graphic);
-		}
-		else if (_cache.get(graphic.key) != graphic)
-		{
-			removeByKey(graphic.key);
-			_cache.set(graphic.key, graphic);
-		}
+		_cache.set(graphic.key, graphic);
 		return graphic;
 	}
 
