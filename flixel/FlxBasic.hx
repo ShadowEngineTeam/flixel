@@ -3,6 +3,7 @@ package flixel;
 import flixel.group.FlxContainer;
 import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxStringUtil;
+import flixel.group.IFlxGroupable;
 
 /**
  * This is a useful "generic" Flixel object. Both `FlxObject` and
@@ -91,7 +92,7 @@ class FlxBasic implements IFlxDestroyable
 	 * The parent containing this basic, typically if you check this recursively you should reach the state
 	 * @since 5.7.0
 	 */
-	public var container(get, null):Null<FlxContainer>;
+	public var container(get, null):Null<IFlxGroupable<FlxBasic>>;
 
 	public function new() {}
 
@@ -109,7 +110,7 @@ class FlxBasic implements IFlxDestroyable
 	{
 		if (container != null)
 			container.remove(this);
-		
+
 		container = null;
 		exists = false;
 		_cameras = null;
@@ -208,7 +209,7 @@ class FlxBasic implements IFlxDestroyable
 			_cameras[0] = Value;
 		return Value;
 	}
-	
+
 	/**
 	 * The main camera that will draw this. Use `this.cameras` to set specific cameras for this
 	 * object, otherwise the container's camera is used, or the container's container and so on.
@@ -222,7 +223,7 @@ class FlxBasic implements IFlxDestroyable
 		// should never be null, unless people do something stupid, but just in case
 		return cameras == null || cameras.length == 0 ? FlxG.camera : cameras[0];
 	}
-	
+
 	/**
 	 * The cameras that will draw this. Use `this.cameras` to set specific cameras for this object,
 	 * otherwise the container's cameras are used, or the container's container and so on. If there
@@ -239,7 +240,7 @@ class FlxBasic implements IFlxDestroyable
 			else
 				@:privateAccess FlxCamera._defaultCameras;
 	}
-	
+
 	/**
 	 * Helper while moving away from `get_cameras`. Should only be used in the draw phase
 	 */
@@ -249,7 +250,7 @@ class FlxBasic implements IFlxDestroyable
 		@:privateAccess
 		return (_cameras == null) ? FlxCamera._defaultCameras : _cameras;
 	}
-	
+
 	@:noCompletion
 	function get_cameras():Array<FlxCamera>
 	{
@@ -261,7 +262,7 @@ class FlxBasic implements IFlxDestroyable
 	{
 		return _cameras = Value;
 	}
-	
+
 	// Only needed for FlxSpriteContainer.SpriteContainer
 	// TODO: remove this when FlxSpriteContainer is removed
 	@:noCompletion
