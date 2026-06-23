@@ -1343,11 +1343,9 @@ class FlxCamera extends FlxBasic
 		if (shakeMatrixFix)
 			__angleMatrix.translate(_fxShakeXOffset, _fxShakeYOffset);
 		__angleMatrix.scale(scaleX, scaleY);
-		// __angleMatrix.scale(totalScaleX, totalScaleY);
-		if (!(_sinScrollAngle == 0 && _sinScrollAngle == 1))
+		if (!(_sinScrollAngle == 0 && _cosScrollAngle == 1))
 			__angleMatrix.rotateWithTrig(_cosScrollAngle, _sinScrollAngle);
 		__angleMatrix.translate(width * 0.5, height * 0.5);
-		__angleMatrix.translate(x, y);
 		__angleMatrix.scale(FlxG.scaleMode.scale.x, FlxG.scaleMode.scale.y);
 		return __angleMatrix;
 	}
