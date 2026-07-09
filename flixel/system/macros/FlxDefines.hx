@@ -282,7 +282,7 @@ class FlxDefines
 		if (defined(FLX_DEBUG))
 			define(FLX_TRACK_GRAPHICS);
 
-		#if (lime_opengl || lime_opengles || lime_webgl)
+		#if lime_webgl
 		// FlxG.stage.window.context.attributes.hardware is not always defined during unit tests
 		if (defined(FLX_NO_UNIT_TEST))
 			define(FLX_OPENGL_AVAILABLE);
