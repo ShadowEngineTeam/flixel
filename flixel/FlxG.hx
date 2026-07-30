@@ -615,7 +615,7 @@ class FlxG
 		#if !flash
 		renderMethod = switch (stage.window.context.type)
 		{
-			case OPENGL, OPENGLES, WEBGL: DRAW_TILES;
+			case OPENGL, OPENGLES: DRAW_TILES;
 			default: BLITTING;
 		}
 		#else
