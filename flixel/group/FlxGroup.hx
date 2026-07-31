@@ -477,14 +477,18 @@ class FlxTypedGroup<T:FlxBasic> extends FlxBasic implements IFlxGroupable<T>
 	/**
    	 * Refreshes the group, by sotring the order of all basics based on their zIndex.
    	 * It does this based on the `zIndex` of each prop.
-    */
+	*/
 	public inline function refresh():Void
 	{
-		if (!useZIndex) return;
-	    sort(function(order:Int, a:T, b:T):Int
-  		{
-    		if (a == null || b == null) return 0;
-    		return FlxSort.byValues(order, a.zIndex, b.zIndex);
+		if (!useZIndex)
+			return;
+
+		sort(function(order:Int, a:T, b:T):Int
+		{
+			if (a == null || b == null)
+				return 0;
+
+			return FlxSort.byValues(order, a.zIndex, b.zIndex);
   		});
 	}
 
