@@ -447,7 +447,7 @@ private class FlxSharedObject extends SharedObject
 {
 	#if (flash || android || ios)
 	/** Use SharedObject as usual */
-	public static inline function getLocal(name:String, ?localPath:String):LoadResult
+	public static function getLocal(name:String, ?localPath:String):LoadResult
 	{
 		try
 		{
@@ -461,9 +461,9 @@ private class FlxSharedObject extends SharedObject
 		}
 	}
 	
-	public static inline function exists(name:String, ?path:String)
+	public static function exists(name:String, ?path:String)
 	{
-		return true;
+		return sys.FileSystem.exists(SharedObject.__getPath(path, name));
 	}
 	#else
 	static var all:Map<String, FlxSharedObject>;
