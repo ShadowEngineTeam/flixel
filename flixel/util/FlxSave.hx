@@ -100,19 +100,6 @@ class FlxSave implements IFlxDestroyable
 	}
 	
 	/**
-	 * The default class resolver of a FlxSave, handles certain Flixel and Openfl classes
-	 */
-	public static inline function resolveFlixelClasses(name:String)
-	{
-		#if flash
-		return Type.resolveClass(name);
-		#else
-		@:privateAccess
-		return SharedObject.__resolveClass(name);
-		#end
-	}
-	
-	/**
 	 * Allows you to directly access the data container in the local shared object.
 	 */
 	public var data(default, null):Dynamic;
@@ -541,10 +528,7 @@ private class FlxSharedObject extends SharedObject
 			{
 				try
 				{
-					final unserializer = new haxe.Unserializer(encodedData);
-					final resolver = { resolveEnum: Type.resolveEnum, resolveClass: FlxSave.resolveFlixelClasses };
-					unserializer.setResolver(cast resolver);
-					sharedObject.data = unserializer.unserialize();
+					sharedObject.data = new haxe.Unserializer(encodedData).unserialize();
 				}
 				catch (e)
 				{
