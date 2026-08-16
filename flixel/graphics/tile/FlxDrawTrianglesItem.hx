@@ -189,19 +189,20 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 			{
 				this.indices[prevIndicesLength + i] = indices[i] + prevNumberOfVertices;
 			}
-			
+
 			final alphaMultiplier = transform != null ? transform.alphaMultiplier : 1.0;
-			for (_ in 0...indicesLength)
-				alphas.push(alphaMultiplier);
-			
+			final perVertexAlpha = colors != null && colors.length > 0;
+			for (i in 0...indicesLength)
+				alphas.push(perVertexAlpha ? alphaMultiplier * (((colors[indices[i]] >> 24) & 0xFF) / 255) : alphaMultiplier);
+
 			if (colored || hasColorOffsets)
 			{
 				if (colorMultipliers == null)
 					colorMultipliers = [];
-				
+
 				if (colorOffsets == null)
 					colorOffsets = [];
-				
+
 				for (_ in 0...indicesLength)
 				{
 					if (transform != null)
@@ -209,7 +210,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 						colorMultipliers.push(transform.redMultiplier);
 						colorMultipliers.push(transform.greenMultiplier);
 						colorMultipliers.push(transform.blueMultiplier);
-						
+
 						colorOffsets.push(transform.redOffset);
 						colorOffsets.push(transform.greenOffset);
 						colorOffsets.push(transform.blueOffset);
@@ -220,17 +221,17 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 						colorMultipliers.push(1);
 						colorMultipliers.push(1);
 						colorMultipliers.push(1);
-						
+
 						colorOffsets.push(0);
 						colorOffsets.push(0);
 						colorOffsets.push(0);
 						colorOffsets.push(0);
 					}
-					
+
 					colorMultipliers.push(1);
 				}
 			}
-			
+
 			verticesPosition += verticesLength;
 			indicesPosition += indicesLength;
 		}
@@ -238,49 +239,6 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 		position.putWeak();
 		cameraBounds.putWeak();
 
-		#if !flash
-		for (_ in 0...indicesLength)
-		{
-			alphas.push(transform != null ? transform.alphaMultiplier : 1.0);
-		}
-
-		if (colored || hasColorOffsets)
-		{
-			if (colorMultipliers == null)
-				colorMultipliers = [];
-
-			if (colorOffsets == null)
-				colorOffsets = [];
-
-			for (_ in 0...indicesLength)
-			{
-				if (transform != null)
-				{
-					colorMultipliers.push(transform.redMultiplier);
-					colorMultipliers.push(transform.greenMultiplier);
-					colorMultipliers.push(transform.blueMultiplier);
-
-					colorOffsets.push(transform.redOffset);
-					colorOffsets.push(transform.greenOffset);
-					colorOffsets.push(transform.blueOffset);
-					colorOffsets.push(transform.alphaOffset);
-				}
-				else
-				{
-					colorMultipliers.push(1);
-					colorMultipliers.push(1);
-					colorMultipliers.push(1);
-
-					colorOffsets.push(0);
-					colorOffsets.push(0);
-					colorOffsets.push(0);
-					colorOffsets.push(0);
-				}
-
-				colorMultipliers.push(1);
-			}
-		}
-		#end
 	}
 
 	inline function setParameterValue(parameter:ShaderParameter<Bool>, value:Bool):Void
@@ -321,7 +279,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 	{
 		final prevVerticesPos = verticesPosition;
 		final prevNumberOfVertices = numVertices;
-		
+
 		final w = frame.frame.width;
 		final h = frame.frame.height;
 		vertices[prevVerticesPos + 0] = matrix.transformX(0, 0); // left
@@ -332,7 +290,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 		vertices[prevVerticesPos + 5] = matrix.transformY(0, h); // bottom
 		vertices[prevVerticesPos + 6] = matrix.transformX(w, h); // right
 		vertices[prevVerticesPos + 7] = matrix.transformY(w, h); // bottom
-		
+
 		uvtData[prevVerticesPos + 0] = frame.uv.left;
 		uvtData[prevVerticesPos + 1] = frame.uv.top;
 		uvtData[prevVerticesPos + 2] = frame.uv.right;
@@ -341,7 +299,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 		uvtData[prevVerticesPos + 5] = frame.uv.bottom;
 		uvtData[prevVerticesPos + 6] = frame.uv.right;
 		uvtData[prevVerticesPos + 7] = frame.uv.bottom;
-		
+
 		final prevIndicesPos = indicesPosition;
 		indices[prevIndicesPos + 0] = prevNumberOfVertices + 0; // TL
 		indices[prevIndicesPos + 1] = prevNumberOfVertices + 1; // TR
@@ -353,15 +311,15 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 		final alphaMultiplier = transform != null ? transform.alphaMultiplier : 1.0;
 		for (i in 0...INDICES_PER_QUAD)
 			alphas.push(alphaMultiplier);
-			
+
 		if (colored || hasColorOffsets)
 		{
 			if (colorMultipliers == null)
 				colorMultipliers = [];
-				
+
 			if (colorOffsets == null)
 				colorOffsets = [];
-				
+
 			for (i in 0...INDICES_PER_QUAD)
 			{
 				if (transform != null)
@@ -369,7 +327,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 					colorMultipliers.push(transform.redMultiplier);
 					colorMultipliers.push(transform.greenMultiplier);
 					colorMultipliers.push(transform.blueMultiplier);
-					
+
 					colorOffsets.push(transform.redOffset);
 					colorOffsets.push(transform.greenOffset);
 					colorOffsets.push(transform.blueOffset);
@@ -380,13 +338,13 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 					colorMultipliers.push(1);
 					colorMultipliers.push(1);
 					colorMultipliers.push(1);
-					
+
 					colorOffsets.push(0);
 					colorOffsets.push(0);
 					colorOffsets.push(0);
 					colorOffsets.push(0);
 				}
-				
+
 				colorMultipliers.push(1);
 			}
 		}
