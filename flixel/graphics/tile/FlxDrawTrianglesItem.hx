@@ -112,11 +112,12 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 
 		verticesPosition = 0;
 		indicesPosition = 0;
-		alphas.splice(0, alphas.length);
+
+		alphas.resize(0);
 		if (colorMultipliers != null)
-			colorMultipliers.splice(0, colorMultipliers.length);
+			colorMultipliers.resize(0);
 		if (colorOffsets != null)
-			colorOffsets.splice(0, colorOffsets.length);
+			colorOffsets.resize(0);
 	}
 
 	override public function dispose():Void
@@ -192,8 +193,17 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 
 			final alphaMultiplier = transform != null ? transform.alphaMultiplier : 1.0;
 			final perVertexAlpha = colors != null && colors.length > 0;
-			for (i in 0...indicesLength)
-				alphas.push(perVertexAlpha ? alphaMultiplier * (((colors[indices[i]] >> 24) & 0xFF) / 255) : alphaMultiplier);
+			var an:Int = alphas.length;
+			if (perVertexAlpha)
+			{
+				for (i in 0...indicesLength)
+					alphas[an++] = alphaMultiplier * (((colors[indices[i]] >> 24) & 0xFF) / 255);
+			}
+			else
+			{
+				for (i in 0...indicesLength)
+					alphas[an++] = alphaMultiplier;
+			}
 
 			if (colored || hasColorOffsets)
 			{
@@ -203,32 +213,28 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 				if (colorOffsets == null)
 					colorOffsets = [];
 
+				final rm = transform != null ? transform.redMultiplier : 1.0;
+				final gm = transform != null ? transform.greenMultiplier : 1.0;
+				final bm = transform != null ? transform.blueMultiplier : 1.0;
+				final ro = transform != null ? transform.redOffset : 0.0;
+				final go = transform != null ? transform.greenOffset : 0.0;
+				final bo = transform != null ? transform.blueOffset : 0.0;
+				final ao = transform != null ? transform.alphaOffset : 0.0;
+
+				var mn:Int = colorMultipliers.length;
+				var on:Int = colorOffsets.length;
+
 				for (_ in 0...indicesLength)
 				{
-					if (transform != null)
-					{
-						colorMultipliers.push(transform.redMultiplier);
-						colorMultipliers.push(transform.greenMultiplier);
-						colorMultipliers.push(transform.blueMultiplier);
+					colorMultipliers[mn++] = rm;
+					colorMultipliers[mn++] = gm;
+					colorMultipliers[mn++] = bm;
+					colorMultipliers[mn++] = 1;
 
-						colorOffsets.push(transform.redOffset);
-						colorOffsets.push(transform.greenOffset);
-						colorOffsets.push(transform.blueOffset);
-						colorOffsets.push(transform.alphaOffset);
-					}
-					else
-					{
-						colorMultipliers.push(1);
-						colorMultipliers.push(1);
-						colorMultipliers.push(1);
-
-						colorOffsets.push(0);
-						colorOffsets.push(0);
-						colorOffsets.push(0);
-						colorOffsets.push(0);
-					}
-
-					colorMultipliers.push(1);
+					colorOffsets[on++] = ro;
+					colorOffsets[on++] = go;
+					colorOffsets[on++] = bo;
+					colorOffsets[on++] = ao;
 				}
 			}
 
