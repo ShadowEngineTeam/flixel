@@ -224,11 +224,21 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 				var mn:Int = colorMultipliers.length;
 				var on:Int = colorOffsets.length;
 
-				for (_ in 0...indicesLength)
+				for (i in 0...indicesLength)
 				{
-					colorMultipliers[mn++] = rm;
-					colorMultipliers[mn++] = gm;
-					colorMultipliers[mn++] = bm;
+					if (perVertexAlpha)
+					{
+						final vc:Int = colors[indices[i]];
+						colorMultipliers[mn++] = rm * (((vc >> 16) & 0xFF) / 255);
+						colorMultipliers[mn++] = gm * (((vc >> 8) & 0xFF) / 255);
+						colorMultipliers[mn++] = bm * ((vc & 0xFF) / 255);
+					}
+					else
+					{
+						colorMultipliers[mn++] = rm;
+						colorMultipliers[mn++] = gm;
+						colorMultipliers[mn++] = bm;
+					}
 					colorMultipliers[mn++] = 1;
 
 					colorOffsets[on++] = ro;
