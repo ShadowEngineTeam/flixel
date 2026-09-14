@@ -754,11 +754,11 @@ class FlxCamera extends FlxBasic
 	@:allow(flixel.system.frontEnds.CameraFrontEnd)
 	function render():Void
 	{
-		flashSprite.filters = filtersEnabled ? filters : null;
+		__applyFlashSpriteFilters();
 
 		if (FlxG.renderTile)
 		{
-			canvas.transform.matrix = __get__rotated__matrix();
+			__apply__rotated__matrix();
 		}
 
 		var currItem:FlxDrawBaseItem<Dynamic> = _headOfDrawStack;
@@ -1350,6 +1350,44 @@ class FlxCamera extends FlxBasic
 		return __angleMatrix;
 	}
 
+	/**
+	 * Keeps `flashSprite.filters` in sync with the camera filters.
+	 */
+	@:noCompletion function __applyFlashSpriteFilters():Void
+	{
+		final targetFilters = filtersEnabled ? filters : null;
+
+		if (targetFilters == null && !__flashSpriteHasFilters)
+			return;
+
+		__flashSpriteHasFilters = targetFilters != null;
+		flashSprite.filters = targetFilters;
+	}
+
+	@:noCompletion var __flashSpriteHasFilters:Bool = false;
+
+	/**
+	 * Pushes the camera matrix to the canvas only when it actually changed.
+	 */
+	@:noCompletion function __apply__rotated__matrix():Void
+	{
+		final matrix = __get__rotated__matrix();
+		final last = __lastCanvasMatrix;
+
+		if (__lastCanvasMatrixValid
+			&& last.a == matrix.a
+			&& last.b == matrix.b
+			&& last.c == matrix.c
+			&& last.d == matrix.d
+			&& last.tx == matrix.tx
+			&& last.ty == matrix.ty)
+			return;
+
+		last.copyFrom(matrix);
+		__lastCanvasMatrixValid = true;
+		canvas.transform.matrix = matrix;
+	}
+
 	@:noCompletion function __get__bounds():FlxRect
 	{
 		__rotatedBounds.set(viewMarginLeft, viewMarginTop, viewWidth, viewHeight);
@@ -1358,6 +1396,9 @@ class FlxCamera extends FlxBasic
 
 	@:noCompletion extern inline function __get__rotated__bounds():FlxRect
 	{
+		if (_sinScrollAngle == 0 && _cosScrollAngle == 1)
+			return __rotatedBounds;
+
 		return __rotatedBounds.getRotatedBounds(scrollAngle, FlxPoint.weak(__rotatedBounds.width * 0.5, __rotatedBounds.height * 0.5), __rotatedBounds);
 	}
 
@@ -1367,6 +1408,8 @@ class FlxCamera extends FlxBasic
 	@:noCompletion var _negativeCosScrollAngle = 1.0;
 
 	@:noCompletion final __angleMatrix = new FlxMatrix();
+	@:noCompletion final __lastCanvasMatrix = new FlxMatrix();
+	@:noCompletion var __lastCanvasMatrixValid:Bool = false;
 	@:noCompletion final __rotatedBounds = new FlxRect();
 	@:noCompletion final __origin = new FlxPoint();
 
@@ -1524,6 +1567,8 @@ class FlxCamera extends FlxBasic
 
 				canvas.scaleX = totalScaleX;
 				canvas.scaleY = totalScaleY;
+
+				__lastCanvasMatrixValid = false;
 
 				#if FLX_DEBUG
 				if (debugLayer != null)
