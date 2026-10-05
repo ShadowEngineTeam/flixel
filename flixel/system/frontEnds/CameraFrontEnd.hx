@@ -69,9 +69,8 @@ class CameraFrontEnd
 		list.push(NewCamera);
 		if (DefaultDrawTarget)
 			defaults.push(NewCamera);
-			
-		sortCameras();
 		
+		NewCamera.ID = list.length - 1;
 		cameraAdded.dispatch(NewCamera);
 		return NewCamera;
 	}
@@ -90,29 +89,28 @@ class CameraFrontEnd
 	 */
 	public function insert<T:FlxCamera>(newCamera:T, position:Int, defaultDrawTarget = true):T
 	{
-		// negative numbers are relative to the length (match Array.insert's behavior)
-		if (position < 0)
-			position += list.length;
-			
-		// invalid ranges are added (match Array.insert's behavior)
-		if (position >= list.length)
-			return add(newCamera);
-			
-		final childIndex = FlxG.game.getChildIndex(list[position].flashSprite);
-		FlxG.game.addChildAt(newCamera.flashSprite, childIndex);
+	    // negative numbers are relative to the length (match Array.insert's behavior)
+	    if (position < 0)
+	        position += list.length;
+	    
+	    // invalid ranges are added (match Array.insert's behavior)
+        if (position >= list.length)
+            return add(newCamera);
+        
+        final childIndex = FlxG.game.getChildIndex(list[position].flashSprite);
+        FlxG.game.addChildAt(newCamera.flashSprite, childIndex);
 		
 		list.insert(position, newCamera);
 		if (defaultDrawTarget)
 			defaults.push(newCamera);
-			
-		sortCameras();
+		
+		for (i in position...list.length)
+			list[i].ID = i;
 		
 		cameraAdded.dispatch(newCamera);
 		return newCamera;
 	}
-	
-	private var _toKillList:Int = 0;
-	
+
 	/**
 	 * Remove a camera from the game.
 	 *
@@ -121,18 +119,8 @@ class CameraFrontEnd
 	 */
 	public function remove(Camera:FlxCamera, Destroy:Bool = true):Void
 	{
-		if (Camera == null)
-			return;
-			
-		if (!Camera.removable)
-		{
-			FlxG.log.warn("FlxG.cameras.remove(): Attempted to remove a non-removable camera.");
-			_toKillList++;
-			return;
-		}
-		
-		var index = list.indexOf(Camera);
-		if (index != -1)
+		var index:Int = list.indexOf(Camera);
+		if (Camera != null && index != -1)
 		{
 			FlxG.game.removeChild(Camera.flashSprite);
 			list.splice(index, 1);
@@ -140,12 +128,18 @@ class CameraFrontEnd
 		}
 		else
 		{
-			FlxG.log.warn("FlxG.cameras.remove(): Camera not found in list.");
+			FlxG.log.warn("FlxG.cameras.remove(): The camera you attempted to remove is not a part of the game.");
 			return;
 		}
-		
-		sortCameras();
-		
+
+		if (FlxG.renderTile)
+		{
+			for (i in 0...list.length)
+			{
+				list[i].ID = i;
+			}
+		}
+
 		if (Destroy)
 			Camera.destroy();
 
@@ -186,11 +180,10 @@ class CameraFrontEnd
 	public function reset(?NewCamera:FlxCamera):Void
 	{
 		FlxG.camera = null;
-		_toKillList = 0;
 		
-		while (list.length - _toKillList > 0)
-			remove(list[_toKillList]);
-			
+		while (list.length > 0)
+			remove(list[0]);
+
 		if (NewCamera == null)
 			NewCamera = new FlxCamera();
 
@@ -383,45 +376,5 @@ class CameraFrontEnd
 		}
 
 		return Color;
-	}
-	
-	public function sortCameras():Void
-	{
-		var zeroGroup = [];
-		var nonZeroGroup = [];
-		
-		for (cam in list)
-		{
-			if (cam.zIndex == 0)
-				zeroGroup.push(cam);
-			else
-				nonZeroGroup.push(cam);
-		}
-		
-		haxe.ds.ArraySort.sort(nonZeroGroup, (a, b) -> a.zIndex - b.zIndex);
-		
-		var newList = zeroGroup.concat(nonZeroGroup);
-		
-		var game = FlxG.game;
-		for (i in 0...newList.length)
-		{
-			var cam = newList[i];
-			var sprite = cam.flashSprite;
-			game.removeChild(sprite);
-		}
-		
-		for (i in 0...newList.length)
-		{
-			var cam = newList[i];
-			var targetIndex = i;
-			var current = game.getChildIndex(cam.flashSprite);
-			if (current != targetIndex)
-				game.addChildAt(cam.flashSprite, targetIndex);
-		}
-		
-		list = newList;
-		
-		for (i in 0...list.length)
-			list[i].ID = i;
 	}
 }
