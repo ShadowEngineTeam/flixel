@@ -64,6 +64,10 @@ class CameraFrontEnd
 	 */
 	public function add<T:FlxCamera>(NewCamera:T, DefaultDrawTarget:Bool = true):T
 	{
+		// First, try adding the camera at its requested zIndex.
+		if (NewCamera.zIndex > -1 && NewCamera.zIndex < list.length)
+			return insert(NewCamera, NewCamera.zIndex, DefaultDrawTarget);
+		
 		FlxG.game.addChildAt(NewCamera.flashSprite, FlxG.game.getChildIndex(FlxG.game._inputContainer));
 		
 		list.push(NewCamera);
@@ -71,6 +75,7 @@ class CameraFrontEnd
 			defaults.push(NewCamera);
 		
 		NewCamera.ID = list.length - 1;
+		NewCamera._zIndex = NewCamera.ID;
 		cameraAdded.dispatch(NewCamera);
 		return NewCamera;
 	}
@@ -104,13 +109,14 @@ class CameraFrontEnd
 		if (defaultDrawTarget)
 			defaults.push(newCamera);
 		
-		for (i in position...list.length)
-			list[i].ID = i;
+		syncIndices(position);
 		
 		cameraAdded.dispatch(newCamera);
 		return newCamera;
 	}
 
+	var _toKillList:Int = 0;
+	
 	/**
 	 * Remove a camera from the game.
 	 *
@@ -119,12 +125,22 @@ class CameraFrontEnd
 	 */
 	public function remove(Camera:FlxCamera, Destroy:Bool = true):Void
 	{
+		if (Camera != null && !Camera.removable)
+		{
+			FlxG.log.warn("FlxG.cameras.remove(): Attempted to remove a non-removable camera.");
+			_toKillList++;
+			return;
+		}
+		
 		var index:Int = list.indexOf(Camera);
 		if (Camera != null && index != -1)
 		{
 			FlxG.game.removeChild(Camera.flashSprite);
 			list.splice(index, 1);
 			defaults.remove(Camera);
+			
+			if (!Camera.zIndexSet)
+				Camera._zIndex = -1;
 		}
 		else
 		{
@@ -132,18 +148,41 @@ class CameraFrontEnd
 			return;
 		}
 
-		if (FlxG.renderTile)
-		{
-			for (i in 0...list.length)
-			{
-				list[i].ID = i;
-			}
-		}
+		syncIndices(index);
 
 		if (Destroy)
 			Camera.destroy();
 
 		cameraRemoved.dispatch(Camera);
+	}
+	
+	/**
+	 * Re-sorts the cameras by their `zIndex`, like `FlxGroup.refresh()`.
+	 * Call this after changing the `zIndex` of cameras that are already added.
+	 */
+	public function sortCameras():Void
+	{
+		haxe.ds.ArraySort.sort(list, (a, b) -> a.zIndex - b.zIndex);
+		
+		// Restack the camera sprites under the input container in the new order.
+		for (camera in list)
+			FlxG.game.removeChild(camera.flashSprite);
+		for (camera in list)
+			FlxG.game.addChildAt(camera.flashSprite, FlxG.game.getChildIndex(FlxG.game._inputContainer));
+		
+		syncIndices(0);
+	}
+	
+	/**
+	 * Keeps each camera's `ID` and `zIndex` equal to its position in `list`, starting at `from`.
+	 */
+	function syncIndices(from:Int):Void
+	{
+		for (i in from...list.length)
+		{
+			list[i].ID = i;
+			list[i]._zIndex = i;
+		}
 	}
 	
 	/**
@@ -180,15 +219,16 @@ class CameraFrontEnd
 	public function reset(?NewCamera:FlxCamera):Void
 	{
 		FlxG.camera = null;
+		_toKillList = 0;
 		
-		while (list.length > 0)
-			remove(list[0]);
+		// Non-removable cameras stay at the front of the list and are skipped.
+		while (list.length - _toKillList > 0)
+			remove(list[_toKillList]);
 
 		if (NewCamera == null)
 			NewCamera = new FlxCamera();
 
 		FlxG.camera = add(NewCamera);
-		NewCamera.ID = 0;
 
 		FlxCamera._defaultCameras = defaults;
 	}

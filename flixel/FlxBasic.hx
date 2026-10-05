@@ -80,11 +80,13 @@ class FlxBasic implements IFlxDestroyable
 
 	@:allow(flixel.group.FlxGroup)
 	@:allow(flixel.group.FlxSpriteGroup)
+	@:allow(flixel.system.frontEnds.CameraFrontEnd)
 	@:noCompletion
 	var zIndexSet(default, null):Bool = false;
 
 	@:allow(flixel.group.FlxGroup)
 	@:allow(flixel.group.FlxSpriteGroup)
+	@:allow(flixel.system.frontEnds.CameraFrontEnd)
 	@:noCompletion
 	var _zIndex:Int = -1;
 	
