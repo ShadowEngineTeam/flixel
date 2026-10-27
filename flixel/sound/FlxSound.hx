@@ -8,7 +8,10 @@ import flixel.system.FlxAssets.FlxSoundAsset;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxStringUtil;
 import lime.media.AudioSource;
+import openfl.events.Event;
+import openfl.events.IEventDispatcher;
 import openfl.media.Sound;
+import openfl.net.URLRequest;
 import openfl.utils.ByteArray;
 
 /**
@@ -27,6 +30,38 @@ class FlxSound extends FlxBasic
 	 * Only really matters if you are doing proximity/panning stuff.
 	 */
 	public var y:Float;
+	
+	/**
+	 * The song title from the sound file's tags (ID3, Vorbis comments, WAV INFO), if it has one.
+	 */
+	public var name(get, null):String;
+	
+	/**
+	 * The artist from the sound file's tags (ID3, Vorbis comments, WAV INFO), if it has one.
+	 */
+	public var artist(get, null):String;
+	
+	/**
+	 * Stores the average wave amplitude of both stereo channels
+	 */
+	public var amplitude(default, null):Float;
+	
+	/**
+	 * Just the amplitude of the left stereo channel
+	 */
+	public var amplitudeLeft(default, null):Float;
+	
+	/**
+	 * Just the amplitude of the right stereo channel
+	 */
+	public var amplitudeRight(default, null):Float;
+	
+	/**
+	 * At which point to stop playing the sound, in milliseconds.
+	 * If not set / `null`, the sound completes normally.
+	 * @since 4.2.0
+	 */
+	public var endTime:Null<Float>;
 	
 	/**
 	 * Whether or not this sound should be automatically destroyed when you switch states.
@@ -158,6 +193,11 @@ class FlxSound extends FlxBasic
 	var _resumeOnFocus:Bool = false;
 	
 	/**
+	 * Whether `name` and `artist` were already read from `_sound`'s tags.
+	 */
+	var _tagsRead:Bool = false;
+	
+	/**
 	 * The FlxSound constructor gets all the variables initialized, but NOT ready to play a sound yet.
 	 */
 	public function new()
@@ -187,6 +227,13 @@ class FlxSound extends FlxBasic
 		_proximityPan = false;
 		visible = false;
 		autoDestroy = false;
+		amplitude = 0;
+		amplitudeLeft = 0;
+		amplitudeRight = 0;
+		endTime = null;
+		name = null;
+		artist = null;
+		_tagsRead = false;
 	}
 	
 	override public function destroy():Void
@@ -225,7 +272,10 @@ class FlxSound extends FlxBasic
 	override public function update(elapsed:Float):Void
 	{
 		if (!playing)
+		{
+			amplitude = amplitudeLeft = amplitudeRight = 0;
 			return;
+		}
 			
 		_volumeAdjust = 1.0;
 		
@@ -241,6 +291,23 @@ class FlxSound extends FlxBasic
 		}
 		
 		updateVolume();
+		
+		// the meter reads the source's output, so take its gain back out like the old SoundChannel peaks
+		final gain:Float = _source.gain;
+		
+		if (gain > 0)
+		{
+			amplitudeLeft = Math.min(1, _source.getPeak(0) / gain);
+			amplitudeRight = Math.min(1, _source.getPeak(1) / gain);
+			amplitude = (amplitudeLeft + amplitudeRight) * 0.5;
+		}
+		else
+		{
+			amplitude = amplitudeLeft = amplitudeRight = 0;
+		}
+		
+		if (endTime != null && time >= endTime)
+			stopped();
 	}
 	
 	override public function kill():Void
@@ -283,6 +350,89 @@ class FlxSound extends FlxBasic
 			else
 				FlxG.log.error('Could not find a Sound asset with an ID of \'$EmbeddedSound\'.');
 		}
+		
+		return init(Looped, AutoDestroy, OnComplete);
+	}
+	
+	/**
+	 * One of the main setup functions for sounds, this function loads a sound from a URL.
+	 * Local files are streamed with miniaudio's decoder instead of being decoded all at once.
+	 *
+	 * @param	SoundURL		A string representing the URL or path of the sound file you want to play.
+	 * @param	Looped			Whether or not this sound should loop endlessly.
+	 * @param	AutoDestroy		Whether or not this FlxSound instance should be destroyed when the sound finishes playing.
+	 * 							Default value is false, but `FlxG.sound.play()` and `FlxG.sound.stream()` will set it to true by default.
+	 * @param	OnComplete		Called when the sound finished playing
+	 * @param	OnLoad			Called when the sound finished loading.
+	 * @return	This FlxSound instance (nice for chaining stuff together, if you're into that).
+	 */
+	public function loadStream(SoundURL:String, Looped:Bool = false, AutoDestroy:Bool = false, ?OnComplete:Void->Void, ?OnLoad:Void->Void):FlxSound
+	{
+		cleanup(true);
+		
+		#if sys
+		if (sys.FileSystem.exists(SoundURL))
+		{
+			try
+			{
+				_sound = Sound.fromFile(SoundURL, true);
+			}
+			catch (e:Dynamic)
+			{
+				FlxG.log.error('Could not stream the sound at \'$SoundURL\'.');
+				_sound = null;
+			}
+			
+			init(Looped, AutoDestroy, OnComplete);
+			
+			if (OnLoad != null && _sound != null)
+				OnLoad();
+				
+			return this;
+		}
+		#end
+		
+		final sound:Sound = new Sound();
+		var loadCallback:Event->Void = null;
+		loadCallback = function(e:Event)
+		{
+			(e.target : IEventDispatcher).removeEventListener(e.type, loadCallback);
+			
+			// Check if the sound was destroyed or reloaded before it finished loading
+			if (_sound == sound)
+			{
+				init(Looped, AutoDestroy, OnComplete);
+				
+				if (OnLoad != null)
+					OnLoad();
+			}
+		}
+		
+		_sound = sound;
+		_sound.addEventListener(Event.COMPLETE, loadCallback);
+		_sound.load(new URLRequest(SoundURL));
+		
+		looped = Looped;
+		autoDestroy = AutoDestroy;
+		onComplete = OnComplete;
+		exists = true;
+		return this;
+	}
+	
+	/**
+	 * One of the main setup functions for sounds, this function loads a sound from a ByteArray.
+	 *
+	 * @param	Bytes 			A ByteArray object.
+	 * @param	Looped			Whether or not this sound should loop endlessly.
+	 * @param	AutoDestroy		Whether or not this FlxSound instance should be destroyed when the sound finishes playing.
+	 * 							Default value is false, but `FlxG.sound.play()` and `FlxG.sound.stream()` will set it to true by default.
+	 * @return	This FlxSound instance (nice for chaining stuff together, if you're into that).
+	 */
+	public function loadByteArray(Bytes:ByteArray, Looped:Bool = false, AutoDestroy:Bool = false, ?OnComplete:Void->Void):FlxSound
+	{
+		cleanup(true);
+		
+		_sound = Sound.fromBytes(Bytes);
 		
 		return init(Looped, AutoDestroy, OnComplete);
 	}
@@ -541,6 +691,34 @@ class FlxSound extends FlxBasic
 		
 		if (resetPosition)
 			_paused = false;
+	}
+	
+	function get_name():String
+	{
+		readTags();
+		return name;
+	}
+	
+	function get_artist():String
+	{
+		readTags();
+		return artist;
+	}
+	
+	function readTags():Void
+	{
+		if (_tagsRead || _sound == null)
+			return;
+			
+		_tagsRead = true;
+		
+		final id3 = _sound.id3;
+		
+		if (id3 != null)
+		{
+			name = id3.songName;
+			artist = id3.artist;
+		}
 	}
 	
 	#if FLX_SOUND_SYSTEM
