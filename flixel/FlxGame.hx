@@ -680,7 +680,8 @@ class FlxGame extends Sprite
 		#end
 
 		final targetFilters = filtersEnabled ? _filters : null;
-		filters = targetFilters;
+		if (appliedFiltersChanged(targetFilters))
+			filters = targetFilters;
 	}
 
 	/**

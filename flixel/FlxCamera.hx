@@ -1380,8 +1380,9 @@ class FlxCamera extends FlxBasic
 	{
 		final targetFilters = filtersEnabled ? filters : null;
 
-		// Assigned every frame: OpenFL clones filters on assignment and only marks those clones dirty then,
-		// so skipping this left shader filters (and everything under them) showing stale frames.
+		if (!__flashSpriteFiltersChanged(targetFilters))
+			return;
+
 		flashSprite.filters = targetFilters;
 	}
 
