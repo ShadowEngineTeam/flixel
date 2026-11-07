@@ -360,7 +360,7 @@ class SoundFrontEnd
 	public function changeVolume(Amount:Float):Void
 	{
 		muted = false;
-		final logVolume:Float = linearToLog(logToLinear(volume) + Amount);
+		var logVolume:Float = linearToLog(logToLinear(volume) + Amount);
 		// Makes sure that the volume is fully muted when it hits the lower limit and is fully set back to max when increased
 		if (logVolume < 0.0011)
 			logVolume = 0;
