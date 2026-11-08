@@ -11,6 +11,7 @@ import flixel.system.FlxAssets;
 import flixel.system.ui.FlxSoundTray;
 import flixel.text.FlxInputText;
 import flixel.util.FlxSignal;
+import lime.media.AudioManager;
 import openfl.media.Sound;
 
 /**
@@ -334,6 +335,13 @@ class SoundFrontEnd
 				sound.destroy();
 			}
 		}
+
+		for (sound in @:privateAccess FlxSound._withSource.copy())
+		{
+			if (sound == music || (!forceDestroy && sound.persist))
+				continue;
+			sound.destroy();
+		}
 	}
 
 	/**
@@ -439,9 +447,15 @@ class SoundFrontEnd
 		#end
 	}
 
+	var _lostFocusPause:Bool = false;
+
+	var _suspendedAudio:Bool = false;
+
 	@:allow(flixel.FlxGame)
 	function onFocusLost():Void
 	{
+		_lostFocusPause = true;
+
 		if (music != null)
 		{
 			music.onFocusLost();
@@ -454,11 +468,27 @@ class SoundFrontEnd
 				sound.onFocusLost();
 			}
 		}
+
+		if (@:privateAccess AudioManager.active)
+		{
+			_suspendedAudio = true;
+			AudioManager.suspend();
+		}
 	}
 
 	@:allow(flixel.FlxGame)
 	function onFocus():Void
 	{
+		if (!_lostFocusPause)
+			return;
+		_lostFocusPause = false;
+
+		if (_suspendedAudio)
+		{
+			_suspendedAudio = false;
+			AudioManager.resume();
+		}
+
 		if (music != null)
 		{
 			music.onFocus();

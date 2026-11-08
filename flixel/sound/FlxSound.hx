@@ -191,6 +191,9 @@ class FlxSound extends FlxBasic
 	 * Helper var to prevent the sound from playing after focus was regained when it was already paused.
 	 */
 	var _resumeOnFocus:Bool = false;
+
+	@:allow(flixel.system.frontEnds.SoundFrontEnd)
+	static var _withSource:Array<FlxSound> = [];
 	
 	/**
 	 * Whether `name` and `artist` were already read from `_sound`'s tags.
@@ -257,6 +260,7 @@ class FlxSound extends FlxBasic
 			_source.onComplete.remove(stopped);
 			_source.dispose();
 			_source = null;
+			_withSource.remove(this);
 		}
 		
 		_sound = null;
@@ -448,6 +452,8 @@ class FlxSound extends FlxBasic
 		{
 			@:privateAccess
 			_source = new AudioSource(_sound.__buffer);
+			if (!_withSource.contains(this))
+				_withSource.push(this);
 			_source.onComplete.add(stopped);
 		}
 		
@@ -517,8 +523,8 @@ class FlxSound extends FlxBasic
 			return this;
 			
 		_paused = false;
-		_source.play();
 		active = true;
+		_playSource();
 		
 		return this;
 	}
@@ -647,9 +653,30 @@ class FlxSound extends FlxBasic
 		
 		_source.currentTime = StartTime;
 		
-		_source.play();
-		
 		active = true;
+		_playSource();
+	}
+
+	static inline function _heldByFocusLoss():Bool
+	{
+		#if FLX_SOUND_SYSTEM
+		return FlxG.sound != null && @:privateAccess FlxG.sound._lostFocusPause;
+		#else
+		return false;
+		#end
+	}
+
+	function _playSource():Void
+	{
+		if (_heldByFocusLoss())
+		{
+			_paused = true;
+			active = false;
+			_resumeOnFocus = true;
+			return;
+		}
+
+		_source.play();
 	}
 	
 	/**
@@ -735,8 +762,11 @@ class FlxSound extends FlxBasic
 	@:allow(flixel.system.frontEnds.SoundFrontEnd)
 	function onFocusLost():Void
 	{
-		_resumeOnFocus = playing;
+		if (playing)
+			_resumeOnFocus = true;
 		pause();
+		if (_source != null)
+			_source.pause();
 	}
 	#end
 	
