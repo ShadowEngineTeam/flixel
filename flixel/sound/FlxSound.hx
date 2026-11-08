@@ -267,7 +267,13 @@ class FlxSound extends FlxBasic
 		
 		onComplete = null;
 		
+		// FlxBasic.destroy removes the sound from its group, but a sound stays in its group
+		// (FlxG.sound.list) when it is destroyed or reloaded: the list pools destroyed sounds,
+		// and loadEmbedded resets a sound with this right after FlxG.sound.load added it.
+		final keptContainer = container;
+		@:privateAccess this.container = null;
 		super.destroy();
+		@:privateAccess this.container = keptContainer;
 	}
 	
 	/**
