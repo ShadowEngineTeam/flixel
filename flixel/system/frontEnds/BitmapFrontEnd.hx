@@ -356,7 +356,24 @@ class BitmapFrontEnd
 	function get_maxTextureSize():Int
 	{
 		if (_maxTextureSize < 0)
-			_maxTextureSize = FlxG.renderTile ? cast GL.getParameter(GL.MAX_TEXTURE_SIZE) : 0;
+		{
+			if (!FlxG.renderTile)
+			{
+				_maxTextureSize = 0;
+			}
+			#if lime_bgfx
+			// Lime can carry both renderers and picks one per window, so there may be no
+			// OpenGL context to ask even though OpenGL support is compiled in.
+			else if (FlxG.stage.window.context.type == BGFX)
+			{
+				_maxTextureSize = FlxG.stage.window.context.bgfx.getCaps().limits.maxTextureSize;
+			}
+			#end
+			else
+			{
+				_maxTextureSize = cast GL.getParameter(GL.MAX_TEXTURE_SIZE);
+			}
+		}
 		
 		return _maxTextureSize;
 	}
