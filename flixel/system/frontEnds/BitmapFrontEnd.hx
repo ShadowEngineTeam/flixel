@@ -362,8 +362,7 @@ class BitmapFrontEnd
 				_maxTextureSize = 0;
 			}
 			#if lime_bgfx
-			// Lime can carry both renderers and picks one per window, so there may be no
-			// OpenGL context to ask even though OpenGL support is compiled in.
+			// A bgfx build of Lime has no OpenGL context to ask
 			else if (FlxG.stage.window.context.type == BGFX)
 			{
 				_maxTextureSize = FlxG.stage.window.context.bgfx.getCaps().limits.maxTextureSize;
