@@ -17,73 +17,73 @@ class FlxBasic implements IFlxDestroyable
 	 */
 	@:allow(flixel.FlxGame)
 	static var activeCount:Int = 0;
-
+	
 	@:allow(flixel.FlxGame)
 	static var visibleCount:Int = 0;
 	#end
-
+	
 	/**
 	 * A unique ID starting from 0 and increasing by 1 for each subsequent `FlxBasic` that is created.
 	 */
 	public var ID:Int = idEnumerator++;
-
+	
 	/**
 	 * A number representing the position of this `FlxBasic ` inside the `FlxGroup` it's added into.
 	 * If it's -1 (the default value), then this `FlxBasic` is just pushed as the last member on the group's current list.
 	 */
 	public var zIndex(get, set):Int;
-
+	
 	@:noCompletion
 	static var idEnumerator:Int = 0;
-
+	
 	/**
 	 * Controls whether `update()` is automatically called by `FlxState`/`FlxGroup`.
 	 */
 	public var active(default, set):Bool = true;
-
+	
 	/**
 	 * Controls whether `draw()` is automatically called by `FlxState`/`FlxGroup`.
 	 */
 	public var visible(default, set):Bool = true;
-
+	
 	/**
 	 * Useful state for many game objects - "dead" (`!alive`) vs `alive`. `kill()` and
 	 * `revive()` both flip this switch (along with `exists`, but you can override that).
 	 */
 	public var alive(default, set):Bool = true;
-
+	
 	/**
 	 * Controls whether `update()` and `draw()` are automatically called by `FlxState`/`FlxGroup`.
 	 */
 	public var exists(default, set):Bool = true;
-
+	
 	/**
 	 * Gets or sets the first camera of this object.
 	 */
 	public var camera(get, set):FlxCamera;
-
+	
 	/**
 	 * This determines on which `FlxCamera`s this object will be drawn. If it is `null` / has not been
 	 * set, it uses the list of default draw targets, which is controlled via `FlxG.camera.setDefaultDrawTarget`
 	 * as well as the `DefaultDrawTarget` argument of `FlxG.camera.add`.
 	 */
 	public var cameras(get, set):Array<FlxCamera>;
-
+	
 	/**
 	 * Enum that informs the collision system which type of object this is (to avoid expensive type casting).
 	 */
 	@:noCompletion
 	var flixelType(default, null):FlxType = NONE;
-
+	
 	@:noCompletion
 	var _cameras:Array<FlxCamera>;
-
+	
 	@:allow(flixel.group.FlxGroup)
 	@:allow(flixel.group.FlxSpriteGroup)
 	@:allow(flixel.system.frontEnds.CameraFrontEnd)
 	@:noCompletion
 	var zIndexSet(default, null):Bool = false;
-
+	
 	@:allow(flixel.group.FlxGroup)
 	@:allow(flixel.group.FlxSpriteGroup)
 	@:allow(flixel.system.frontEnds.CameraFrontEnd)
@@ -95,9 +95,9 @@ class FlxBasic implements IFlxDestroyable
 	 * @since 5.7.0
 	 */
 	public var container(get, null):Null<IFlxGroupable<FlxBasic>>;
-
+	
 	public function new() {}
-
+	
 	/**
 	 * **WARNING:** A destroyed `FlxBasic` can't be used anymore.
 	 * It may even cause crashes if it is still part of a group or state.
@@ -112,12 +112,12 @@ class FlxBasic implements IFlxDestroyable
 	{
 		if (container != null)
 			container.remove(this);
-
+			
 		container = null;
 		exists = false;
 		_cameras = null;
 	}
-
+	
 	/**
 	 * Handy function for "killing" game objects. Use `reset()` to revive them.
 	 * Default behavior is to flag them as nonexistent AND dead.
@@ -129,7 +129,7 @@ class FlxBasic implements IFlxDestroyable
 		alive = false;
 		exists = false;
 	}
-
+	
 	/**
 	 * Handy function for bringing game objects "back to life". Just sets `alive` and `exists` back to `true`.
 	 * In practice, this function is most often called by `FlxObject#reset()`.
@@ -139,7 +139,7 @@ class FlxBasic implements IFlxDestroyable
 		alive = true;
 		exists = true;
 	}
-
+	
 	/**
 	 * Override this function to update your class's position and appearance.
 	 * This is where most of your game rules and behavioral code will go.
@@ -150,7 +150,7 @@ class FlxBasic implements IFlxDestroyable
 		activeCount++;
 		#end
 	}
-
+	
 	/**
 	 * Override this function to control how the object is drawn.
 	 * Doing so is rarely necessary, but can be very useful.
@@ -161,7 +161,7 @@ class FlxBasic implements IFlxDestroyable
 		visibleCount++;
 		#end
 	}
-
+	
 	public function toString():String
 	{
 		return FlxStringUtil.getDebugString([
@@ -171,37 +171,37 @@ class FlxBasic implements IFlxDestroyable
 			LabelValuePair.weak("exists", exists)
 		]);
 	}
-
+	
 	@:noCompletion
 	function set_visible(Value:Bool):Bool
 	{
 		return visible = Value;
 	}
-
+	
 	@:noCompletion
 	function set_active(Value:Bool):Bool
 	{
 		return active = Value;
 	}
-
+	
 	@:noCompletion
 	function set_exists(Value:Bool):Bool
 	{
 		return exists = Value;
 	}
-
+	
 	@:noCompletion
 	function set_alive(Value:Bool):Bool
 	{
 		return alive = Value;
 	}
-
+	
 	@:noCompletion
 	function get_camera():FlxCamera
 	{
 		return (_cameras == null || _cameras.length == 0) ? FlxCamera._defaultCameras[0] : _cameras[0];
 	}
-
+	
 	@:noCompletion
 	function set_camera(Value:FlxCamera):FlxCamera
 	{
@@ -211,7 +211,7 @@ class FlxBasic implements IFlxDestroyable
 			_cameras[0] = Value;
 		return Value;
 	}
-
+	
 	/**
 	 * The main camera that will draw this. Use `this.cameras` to set specific cameras for this
 	 * object, otherwise the container's camera is used, or the container's container and so on.
@@ -225,7 +225,7 @@ class FlxBasic implements IFlxDestroyable
 		// should never be null, unless people do something stupid, but just in case
 		return cameras == null || cameras.length == 0 ? FlxG.camera : cameras[0];
 	}
-
+	
 	/**
 	 * The cameras that will draw this. Use `this.cameras` to set specific cameras for this object,
 	 * otherwise the container's cameras are used, or the container's container and so on. If there
@@ -235,14 +235,10 @@ class FlxBasic implements IFlxDestroyable
 	 */
 	public function getCameras():Array<FlxCamera>
 	{
-		return if (_cameras != null)
-				_cameras;
-			else if (_cameras == null && container != null)
-				container.getCameras();
-			else
-				@:privateAccess FlxCamera._defaultCameras;
+		return if (_cameras != null) _cameras; else if (_cameras == null && container != null) container.getCameras(); else
+			@:privateAccess FlxCamera._defaultCameras;
 	}
-
+	
 	/**
 	 * Helper while moving away from `get_cameras`. Should only be used in the draw phase
 	 */
@@ -252,21 +248,22 @@ class FlxBasic implements IFlxDestroyable
 		@:privateAccess
 		return (_cameras == null) ? FlxCamera._defaultCameras : _cameras;
 	}
-
+	
 	@:noCompletion
 	function get_cameras():Array<FlxCamera>
 	{
 		return getCamerasLegacy();
 	}
-
+	
 	@:noCompletion
 	function set_cameras(Value:Array<FlxCamera>):Array<FlxCamera>
 	{
 		return _cameras = Value;
 	}
-
+	
 	// Only needed for FlxSpriteContainer.SpriteContainer
 	// TODO: remove this when FlxSpriteContainer is removed
+	
 	@:noCompletion
 	function get_container()
 	{
@@ -307,13 +304,13 @@ interface IFlxBasic
 	var visible(default, set):Bool;
 	var alive(default, set):Bool;
 	var exists(default, set):Bool;
-
+	
 	function draw():Void;
 	function update(elapsed:Float):Void;
 	function destroy():Void;
-
+	
 	function kill():Void;
 	function revive():Void;
-
+	
 	function toString():String;
 }
