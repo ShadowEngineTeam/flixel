@@ -110,8 +110,9 @@ class SoundFrontEnd
 	 * @param   volume         How loud the sound should be, from 0 to 1.
 	 * @param   looped         Whether to loop this music.
 	 * @param   group          The group to add this sound to.
+	 * @param   stream         Whether to stream the sound.
 	 */
-	public function playMusic(embeddedMusic:FlxSoundAsset, volume = 1.0, looped = true, ?group:FlxSoundGroup):Void
+	public function playMusic(embeddedMusic:FlxSoundAsset, volume = 1.0, looped = true, ?group:FlxSoundGroup, stream:Bool = true):Void
 	{
 		if (group == null)
 			group = defaultMusicGroup;
@@ -125,7 +126,7 @@ class SoundFrontEnd
 			music.stop();
 		}
 		
-		music.loadEmbedded(embeddedMusic, looped);
+		music.loadAudio(embeddedMusic, stream, looped, false);
 		music.volume = volume;
 		music.persist = true;
 		group.add(music);
@@ -148,10 +149,11 @@ class SoundFrontEnd
 	 *                          Local files are streamed instead of decoded all at once.
 	 * @param   onComplete      Called when the sound finished playing.
 	 * @param   onLoad          Called when the sound finished loading.  Called immediately for succesfully loaded embedded sounds.
+	 * @param   stream          Whether to stream the embedded sound.
 	 * @return  A FlxSound object.
 	 */
 	public function load(?embeddedSound:FlxSoundAsset, volume = 1.0, looped = false, ?group:FlxSoundGroup, autoDestroy = false, autoPlay = false, ?url:String,
-			?onComplete:Void->Void, ?onLoad:Void->Void):FlxSound
+			?onComplete:Void->Void, ?onLoad:Void->Void, stream:Bool = false):FlxSound
 	{
 		if ((embeddedSound == null) && (url == null))
 		{
@@ -163,7 +165,7 @@ class SoundFrontEnd
 		
 		if (embeddedSound != null)
 		{
-			sound.loadEmbedded(embeddedSound, looped, autoDestroy, onComplete);
+			sound.loadAudio(embeddedSound, stream, looped, autoDestroy, onComplete);
 			loadHelper(sound, volume, group, autoPlay);
 			// Call OnlLoad() because the sound already loaded
 			if (onLoad != null && sound._sound != null)
@@ -234,7 +236,7 @@ class SoundFrontEnd
 	}
 	
 	/**
-	 * Plays a sound from an embedded sound. Tries to recycle a cached sound first.
+	 * Plays a sound from an embedded sound. Tries to recycle a cached sound first only if not streaming.
 	 *
 	 * **Note:** If the `FLX_DEFAULT_SOUND_EXT` flag is enabled, you may omit the file extension
 	 *
@@ -245,15 +247,17 @@ class SoundFrontEnd
 	 * @param   autoDestroy    Whether to destroy this sound when it finishes playing.
 	 *                         Leave this value set to "false" if you want to re-use this FlxSound instance.
 	 * @param   onComplete     Called when the sound finished playing
+	 * @param   stream         Whether to stream the sound.
 	 * @return  A FlxSound object.
 	 */
-	public function play(embeddedSound:FlxSoundAsset, volume = 1.0, looped = false, ?group:FlxSoundGroup, autoDestroy = true, ?onComplete:Void->Void):FlxSound
+	public function play(embeddedSound:FlxSoundAsset, volume = 1.0, looped = false, ?group:FlxSoundGroup, autoDestroy = true, ?onComplete:Void->Void,
+			stream = false):FlxSound
 	{
-		if ((embeddedSound is String))
+		if ((embeddedSound is String) && !stream)
 		{
 			embeddedSound = cache(embeddedSound);
 		}
-		var sound = list.recycle(FlxSound).loadEmbedded(embeddedSound, looped, autoDestroy, onComplete);
+		var sound = list.recycle(FlxSound).loadAudio(embeddedSound, stream, looped, autoDestroy, onComplete);
 		return loadHelper(sound, volume, group, true);
 	}
 	
